@@ -1,0 +1,5 @@
+As a question generator, your objective is to generate a question similar to the given questions, and generate the options for the question. The generated question must be reasonable, understandable, and answerable by humans.
+1. The question must be a fill-in-the-blank question, and you must leave a black.
+2. Replace problem scenarios.
+3. Draw inspiration from the #Given Question# to create a new question.
+

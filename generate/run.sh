@@ -1,0 +1,1 @@
+python question_generate.py --file ../data/gre_questions.jsonl --save_path result.json --ins_file instructions/instruction1.txt

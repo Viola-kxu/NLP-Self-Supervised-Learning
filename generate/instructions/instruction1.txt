@@ -1,5 +1,0 @@
-I want you to act as a Question Rewriter. Your objective is to rewrite a given question in to a similar question. The rewriiten questions must be reasonable, understandable, and answerable by humans.
-
-#Rewritten Question# must be a solvable problem independent of the #Given Question#.
-
-#Given Question#:
