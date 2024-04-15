@@ -68,7 +68,7 @@ class CustomModelForHeadTuning(nn.Module):
         return logits
 
 
-def train(model, train_dataloader, optimizer, device):
+def train(model, train_dataloader, optimizer, device, update: bool = True):
     model.train()
     loss_fn = nn.CrossEntropyLoss()
     total_loss = 0
@@ -77,11 +77,15 @@ def train(model, train_dataloader, optimizer, device):
         attention_mask = batch['attention_mask'].to(device)
         labels = batch['labels'].to(device)
 
-        optimizer.zero_grad()
-        outputs = model(input_ids, attention_mask)
-        loss = loss_fn(outputs, labels)
-        loss.backward()
-        optimizer.step()
+        if update:
+            optimizer.zero_grad()
+            outputs = model(input_ids, attention_mask)
+            loss = loss_fn(outputs, labels)
+            loss.backward()
+            optimizer.step()
+        else:
+            outputs = model(input_ids, attention_mask)
+            loss = loss_fn(outputs, labels)
 
         total_loss += loss.item()
     return total_loss / len(train_dataloader)
@@ -119,7 +123,9 @@ def main(args):
         print(f'Epoch {epoch + 1}')
         avg_loss = train(model, train_dataloader, optimizer, device)
         print(f'Training Loss: {avg_loss:.4f}')
+        val_loss = train(model, train_dataloader, optimizer, device, update=False)
         val_accuracy = evaluate_model(model, validation_dataloader, device)
+        print(f'Validation Loss: {val_loss:.4f}')
         print(f'Validation Accuracy: {val_accuracy:.4f}')
 
 
