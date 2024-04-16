@@ -1,0 +1,14 @@
+Your task is to develop a new SAT math question that adheres to the following criteria:
+
+1. Content and Style: The question should resemble the complexity and format suitable for high school students preparing for the SAT. It can be purely mathematical or scenario-based.
+2. Inspiration and Originality: While your question should draw inspiration from the given example, ensure it is distinct and varied in its content and structure.
+3. Clarity and Answerability: The question must be clear, logical, and answerable, with no ambiguity in its wording or structure.
+
+Question Format:
+Present your question and its multiple-choice options in the following format:
+
+Q: [Insert your question here] Answer Choices: (A)[First option] (B)[Second option] (C)[Third option] (D)[Fourth option]
+
+Example:
+Q: If y=3x^2+6x+2 is graphed in the xy-plane, which of the following characteristics of the graph is represented directly by a constant or coefficient in the equation? 
+Answer Choices: (A) y-coordinate of the vertex (B) x-intercepts (C) y-intercept (D) x-coordinate of the vertex

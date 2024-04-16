@@ -1,5 +1,6 @@
 import argparse
 import random
+import re
 
 import openai
 import time
@@ -8,11 +9,12 @@ import json
 openai.api_key = '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'
 
 
-def get_dataset(args, instruction, seed, count=20):
+def get_dataset(args, instruction, seed, count=10):
     prompt = instruction
 
     # read current questions
     num = 1
+    delete = []
     instances = []
     with (open(seed, 'r', encoding="utf-8") as f):
         for line in f:
@@ -20,45 +22,40 @@ def get_dataset(args, instruction, seed, count=20):
             num += 1
 
     for _ in range(count):
-        # select 5 random questions seeds
         question_prompt = ""
-        question_ids = random.sample(range(0, num - 1), 5)
-        print("\nGenerating " + str(_) + " instance ----------------------- \nQuestions selected: ", question_ids)
+        question_ids = random.sample(range(0, num - 1), 10)
         for question_id in question_ids:
-            question_prompt += "#Given Question#: " + instances[question_id]['question'] + "\n\n"
+            question_prompt += "#Given Question and Options#: " + "question id " + str(question_id) + ": " + instances[question_id]['question'] + "\n\n"
 
-        # generate a question
+        # Assuming get_res_batch and the rest of your code is defined correctly
         generated = get_res_batch(prompt + question_prompt)
-        gen_instance = {"id": num, "question": generated}
-        dump_jsonl(gen_instance, args.save_path)
+        id = extract_int(generated)
+        print("the worst question is" + generated + ": " + instances[id]['question'] + "\n\n")
+        delete.append(int(id))
 
-        # update of questions instances
-        num += 1
-        instances.append(gen_instance)
+    delete_question_by_id(seed, delete)
 
-# def get_dataset(args, instruction, file):
-#     with open(file, 'r', encoding="utf-8") as f:
-#         data = []
-#         for line_number, line in enumerate(f, 1):
-#             try:
-#                 if line.strip():
-#                     data.append(json.loads(line))
-#             except json.decoder.JSONDecodeError as e:
-#                 print(f"Error decoding JSON on line {line_number}: {line}")
-#                 print(e)
-#                 continue
-#
-#     for idx, item in enumerate(data):
-#         input = item["question"] + item.get("answer", "")
-#         ans = get_res_batch(instruction, input)
-#         gen = {"id": item["id"], "input": input, "question": ans}
-#         dump_jsonl(gen, args.save_path)
-#         print(idx + 1, "completed!")
 
+
+def delete_question_by_id(file, ids):
+    with open(file, 'r', encoding="utf-8") as f:
+        data = []
+        for line in f:
+            data.append(json.loads(line))
+
+    new_data = [data[i] for i in range(len(data)) if i not in ids]
+    for i in range(len(new_data)):
+        dump_jsonl(new_data[i], args.save_path)
+
+def extract_int(text):
+    match = re.search(r"Worst Question ID:\s*(\d+)", text)
+    if match:
+        return int(match.group(1))
+    return None
 
 def get_res_batch(prompt):
     message = [
-        {"role": "user", "content": prompt + "\n#Rewritten Question#: "}
+        {"role": "user", "content": prompt +  "\n#Worst Question id#: "}
     ]
 
     while True:
@@ -102,9 +99,9 @@ def dump_jsonl(data, output_path, append=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, default='../data/sat_math_seed_trained.jsonl')
-    parser.add_argument('--save_path', type=str, default='../data/generated_questions.jsonl')
-    parser.add_argument('--ins_file', type=str, default='instructions/instruction_sat_math.txt')
+    parser.add_argument('--file', type=str, default='../data/generated_questions.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/filtered_questions.jsonl')
+    parser.add_argument('--ins_file', type=str, default='instructions/instruction_filter.txt')
     args = parser.parse_args()
     file = args.file
 

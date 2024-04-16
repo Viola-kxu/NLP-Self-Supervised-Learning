@@ -1,2 +1,4 @@
 # NLP-Self-Supervised-Learning
-project
+
+TODO
+- [ ] Generate ques: shuffle seeds
