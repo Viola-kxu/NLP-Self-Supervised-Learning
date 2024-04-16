@@ -23,7 +23,7 @@ def get_dataset(args, instruction, seed, count=10):
 
     for _ in range(count):
         question_prompt = ""
-        question_ids = random.sample(range(0, num - 1), 5)
+        question_ids = random.sample(range(0, num - 1), 10)
         for question_id in question_ids:
             question_prompt += "#Given Question and Options#: " + "question id " + str(question_id) + ": " + instances[question_id]['question'] + "\n\n"
 
@@ -31,7 +31,7 @@ def get_dataset(args, instruction, seed, count=10):
         generated = get_res_batch(prompt + question_prompt)
         id = extract_int(generated)
         print("the worst question is" + generated + ": " + instances[id]['question'] + "\n\n")
-        delete.append(int(generated))
+        delete.append(int(id))
 
     delete_question_by_id(seed, delete)
 
@@ -48,9 +48,9 @@ def delete_question_by_id(file, ids):
         dump_jsonl(new_data[i], args.save_path)
 
 def extract_int(text):
-    match = re.search(r'\d+', text)
+    match = re.search(r"Worst Question ID:\s*(\d+)", text)
     if match:
-        return int(match.group())
+        return int(match.group(1))
     return None
 
 def get_res_batch(prompt):
@@ -99,8 +99,8 @@ def dump_jsonl(data, output_path, append=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, default='../data/result.json')
-    parser.add_argument('--save_path', type=str, default='../data/filtered.jsonl')
+    parser.add_argument('--file', type=str, default='../data/generated_questions.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/filtered_questions.jsonl')
     parser.add_argument('--ins_file', type=str, default='instructions/instruction_filter.txt')
     args = parser.parse_args()
     file = args.file

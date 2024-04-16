@@ -1,1 +1,12 @@
-From the list provided, identify the most problematic question and answer option. 'Problematic' refers to questions that are either unsolvable or completely nonsensical. Please respond by providing only the integer ID number of the question you find most problematic. Your answer should be a single integer.
+From the provided list, select the question and its corresponding answer choices that you find most problematic. A 'problematic' question could be characterized by any of the following criteria:
+
+The question is unsolvable.
+None of the provided answer choices are correct.
+The question or its answer choices are nonsensical or irrelevant.
+
+Instructions:
+Please analyze and explain in detail why you consider this to be the worst question and answer choices. Provide a step-by-step explanation of your reasoning.
+
+Response Format:
+Format your analysis as follows:
+"Worst Question ID: [integer number of the question ID] Reasons: [Your detailed reasons explaining why this is the worst question and answer choices]." Do not include the "[]" in your response.

@@ -120,8 +120,8 @@ def dump_jsonl(data, output_path, append=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, default='../data/filtered.jsonl')
-    parser.add_argument('--save_path', type=str, default='../data/with_answers.jsonl')
+    parser.add_argument('--file', type=str, default='../data/filtered_questions.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/generated_answers.jsonl')
     parser.add_argument('--ins_file', type=str, default='instructions/instruction_answer.txt')
     args = parser.parse_args()
     file = args.file

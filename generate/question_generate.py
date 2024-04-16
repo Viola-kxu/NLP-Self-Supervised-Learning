@@ -8,7 +8,7 @@ import json
 openai.api_key = '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'
 
 
-def get_dataset(args, instruction, seed, count=5):
+def get_dataset(args, instruction, seed, count=20):
     prompt = instruction
 
     # read current questions
@@ -102,8 +102,8 @@ def dump_jsonl(data, output_path, append=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, default='../data/result.json')
-    parser.add_argument('--save_path', type=str, default='../data/result.json')
+    parser.add_argument('--file', type=str, default='../data/sat_math_seed_trained.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/generated_questions.jsonl')
     parser.add_argument('--ins_file', type=str, default='instructions/instruction_sat_math.txt')
     args = parser.parse_args()
     file = args.file
