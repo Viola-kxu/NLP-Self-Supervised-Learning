@@ -1,0 +1,1 @@
+Answer the given question step by step. Please respond by providing only the integer index of the correct option. For example, if you think the correct option is (A), respond with 0; if you think the correct option is (B), respond with 1, and so on.

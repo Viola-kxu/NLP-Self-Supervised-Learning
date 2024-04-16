@@ -1,7 +1,6 @@
 import argparse
 import random
 import re
-
 import openai
 import time
 import json
@@ -9,43 +8,27 @@ import json
 openai.api_key = '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'
 
 
-def get_dataset(args, instruction, seed, count=10):
+def get_dataset(args, instruction, seed):
     prompt = instruction
 
     # read current questions
     num = 1
-    delete = []
     instances = []
     with (open(seed, 'r', encoding="utf-8") as f):
         for line in f:
             instances.append(json.loads(line))
             num += 1
 
-    for _ in range(count):
-        question_prompt = ""
-        question_ids = random.sample(range(0, num - 1), 5)
-        for question_id in question_ids:
-            question_prompt += "#Given Question and Options#: " + "question id " + str(question_id) + ": " + instances[question_id]['question'] + "\n\n"
-
-        # Assuming get_res_batch and the rest of your code is defined correctly
-        generated = get_res_batch(prompt + question_prompt)
-        id = extract_int(generated)
-        print("the worst question is" + generated + ": " + instances[id]['question'] + "\n\n")
-        delete.append(int(generated))
-
-    delete_question_by_id(seed, delete)
-
-
-
-def delete_question_by_id(file, ids):
-    with open(file, 'r', encoding="utf-8") as f:
-        data = []
-        for line in f:
-            data.append(json.loads(line))
-
-    new_data = [data[i] for i in range(len(data)) if i not in ids]
-    for i in range(len(new_data)):
-        dump_jsonl(new_data[i], args.save_path)
+    # generate an answer for each question
+    for i in range(len(instances)):
+        prompt = prompt + "Given question: " + instances[i]['question']
+        # extract options from the question
+        options = extract_options(instances[i]['question'])
+        # generate the correct index for the question
+        ans = extract_int(get_res_batch(prompt))
+        gen = {"id": instances[i]['id'], "question":instances[i]['question'], "options": options, "correct_index": [ans]}
+        dump_jsonl(gen, args.save_path)
+        print(instances[i]['id'], "completed!")
 
 def extract_int(text):
     match = re.search(r'\d+', text)
@@ -53,9 +36,23 @@ def extract_int(text):
         return int(match.group())
     return None
 
+
+def extract_options(question_text):
+    print(question_text + "\n\n")
+    print(question_text.split("Answer Choices:"))
+    start_index = question_text.find("Answer Choices:")
+    if start_index == -1:
+        raise ValueError("Answer Choices not found in question text")
+    start_index += len("Answer Choices:") + 1
+    question_text = question_text[start_index:].strip()
+    options = re.findall(r"\([A-Z]\)[^)]+", question_text)
+    formatted_options = [option.strip() for option in options]
+    return formatted_options
+
+
 def get_res_batch(prompt):
     message = [
-        {"role": "user", "content": prompt +  "\n#Worst Question id#: "}
+        {"role": "user", "content": prompt + "\n#Correct Index#: "}
     ]
 
     while True:
@@ -99,9 +96,9 @@ def dump_jsonl(data, output_path, append=True):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, default='../data/result.json')
-    parser.add_argument('--save_path', type=str, default='../data/filtered.jsonl')
-    parser.add_argument('--ins_file', type=str, default='instructions/instruction_filter.txt')
+    parser.add_argument('--file', type=str, default='../data/filtered.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/with_answers.jsonl')
+    parser.add_argument('--ins_file', type=str, default='instructions/instruction_answer.txt')
     args = parser.parse_args()
     file = args.file
 
