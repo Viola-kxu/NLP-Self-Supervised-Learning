@@ -2,109 +2,73 @@ import argparse
 import random
 import re
 
-import openai
-import time
-import json
+from utils import *
+from generate_questions import SEED_SIZE
 
-openai.api_key = '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'
+COUNT = 5
+FILTER_SELECTION = 5
 
 
-def get_dataset(args, instruction, seed, count=10):
-    prompt = instruction
-
+def get_delete_idx(instruction, seed_file):
     # read current questions
     num = 1
-    delete = []
+    delete_idx = []
     instances = []
-    with (open(seed, 'r', encoding="utf-8") as f):
+    with (open(seed_file, 'r', encoding="utf-8") as f):
         for line in f:
             instances.append(json.loads(line))
             num += 1
 
-    for _ in range(count):
+    for _ in range(COUNT):
         question_prompt = ""
-        question_ids = random.sample(range(0, num - 1), 10)
+        question_ids = random.sample(range(SEED_SIZE, num - 1), FILTER_SELECTION)
         for question_id in question_ids:
-            question_prompt += "#Given Question and Options#: " + "question id " + str(question_id) + ": " + instances[question_id]['question'] + "\n\n"
+            question_prompt += ("#Given Question and Options#: " + "question id " + str(question_id) + ": " +
+                                instances[question_id]['question'] + "\n\n")
 
-        # Assuming get_res_batch and the rest of your code is defined correctly
-        generated = get_res_batch(prompt + question_prompt)
-        id = extract_int(generated)
-        print("the worst question is" + generated + ": " + instances[id]['question'] + "\n\n")
-        delete.append(int(id))
+        generated = call_openai_api(instruction + question_prompt)
+        ids = int(extract_idx_from_msg(generated))
+        print("Filtered index among " + str(question_ids) + ": " + str(ids))
+        delete_idx.append(ids)
 
-    delete_question_by_id(seed, delete)
-
+    return instances, delete_idx
 
 
-def delete_question_by_id(file, ids):
-    with open(file, 'r', encoding="utf-8") as f:
-        data = []
-        for line in f:
-            data.append(json.loads(line))
+def delete_question_by_id(instances, ids):
+    instance_id = 1
+    for i in range(len(instances)):
+        if i not in ids:
+            dump_jsonl(instances[i], args.save_path)
+            instance_id += 1
 
-    new_data = [data[i] for i in range(len(data)) if i not in ids]
-    for i in range(len(new_data)):
-        dump_jsonl(new_data[i], args.save_path)
 
-def extract_int(text):
+def extract_idx_from_msg(text):
     match = re.search(r"Worst Question ID:\s*(\d+)", text)
     if match:
         return int(match.group(1))
     return None
 
-def get_res_batch(prompt):
-    message = [
-        {"role": "user", "content": prompt +  "\n#Worst Question id#: "}
-    ]
-
-    while True:
-        try:
-            res = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=message,
-                temperature=1.0,
-                max_tokens=512
-            )
-            break
-        except openai.error.RateLimitError:
-            print('openai.error.RateLimitError\nRetrying...')
-            time.sleep(30)
-        except openai.error.ServiceUnavailableError:
-            print('openai.error.ServiceUnavailableError\nRetrying...')
-            time.sleep(20)
-        except openai.error.Timeout:
-            print('openai.error.Timeout\nRetrying...')
-            time.sleep(20)
-        except openai.error.APIError:
-            print('openai.error.APIError\nRetrying...')
-            time.sleep(20)
-        except openai.error.APIConnectionError:
-            print('openai.error.APIConnectionError\nRetrying...')
-            time.sleep(20)
-
-    print(res['choices'][0]['message']['content'])
-    return res['choices'][0]['message']['content']
-
-
-def dump_jsonl(data, output_path, append=True):
-    """
-    Write list of objects to a JSON lines file.
-    """
-    mode = 'a+' if append else 'w'
-    with open(output_path, mode, encoding='utf-8') as f:
-        json_record = json.dumps(data, ensure_ascii=False)
-        f.write(json_record + '\n')
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, default='../data/generated_questions.jsonl')
-    parser.add_argument('--save_path', type=str, default='../data/filtered_questions.jsonl')
+    parser.add_argument('--file', type=str, default='../data/generated_dataset.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/generated_dataset.jsonl')
     parser.add_argument('--ins_file', type=str, default='instructions/instruction_filter.txt')
     args = parser.parse_args()
     file = args.file
 
+    print("FILTERING IN PROGRESS -----------------------")
+
+    # get delete index
     with open(args.ins_file, 'r', encoding="utf-8") as f:
         instruction = f.read()
-    get_dataset(args, instruction, file)
+    instances, delete_idx = get_delete_idx(instruction, file)
+    # print("Filtered indices: ", delete_idx, " -----------------------")
+
+    # clear target file
+    target_file = open(args.save_path, mode="w").close()
+
+    # delete questions
+    delete_question_by_id(instances, delete_idx)
+
+    print("FILTERING DONE -----------------------")
