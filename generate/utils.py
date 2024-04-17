@@ -31,7 +31,7 @@ def call_openai_api(prompt):
             break
         except openai.error.RateLimitError:
             print('openai.error.RateLimitError\nRetrying...')
-            time.sleep(21)
+            time.sleep(60)
         except openai.error.ServiceUnavailableError:
             print('openai.error.ServiceUnavailableError\nRetrying...')
             time.sleep(20)

@@ -23,7 +23,7 @@ def generate_question(args, instruction, seed):
         question_prompt = ""
         question_ids = random.sample(range(0, SEED_SIZE - 1), NUM_SELECTION) + random.sample(range(SEED_SIZE, num - 1), NUM_SELECTION)
         random.shuffle(question_ids) # shuffle order
-        print("\nGenerating " + str(_) + " instance ----------------------- \nQuestions selected: ", question_ids)
+        print("\nGenerating instance " + str(_) + " ----------------------- \nQuestions selected: ", question_ids)
         for question_id in question_ids:
             question_prompt += "#Given Question#: " + instances[question_id]['question'] + "\n\n"
 
@@ -46,6 +46,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     file = args.file
 
+    print("GENERATING QUESTIONS -----------------------")
+
     with open(args.ins_file, 'r', encoding="utf-8") as f:
         instruction = f.read()
     generate_question(args, instruction, file)
+
+    print("GENERATING QUESTIONS DONE -----------------------")

@@ -1,4 +1,4 @@
 # NLP-Self-Supervised-Learning
 
 TODO
-- [ ] Generate ques: shuffle seeds
+- [ ] Answer is correct but not in the options

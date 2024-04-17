@@ -38,7 +38,7 @@ def delete_question_by_id(instances, ids):
     instance_id = 1
     for i in range(len(instances)):
         if i not in ids:
-            dump_jsonl({"id": instance_id, "question": instances[i]['question']}, args.save_path)
+            dump_jsonl(instances[i], args.save_path)
             instance_id += 1
 
 
@@ -57,14 +57,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
     file = args.file
 
+    print("FILTERING IN PROGRESS -----------------------")
+
     # get delete index
     with open(args.ins_file, 'r', encoding="utf-8") as f:
         instruction = f.read()
     instances, delete_idx = get_delete_idx(instruction, file)
-    print("Filtered indices: ", delete_idx, " -----------------------")
+    # print("Filtered indices: ", delete_idx, " -----------------------")
 
     # clear target file
     target_file = open(args.save_path, mode="w").close()
 
     # delete questions
     delete_question_by_id(instances, delete_idx)
+
+    print("FILTERING DONE -----------------------")

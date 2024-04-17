@@ -1,10 +1,9 @@
 #!/bin/bash
 
-times=1
+iter=40
 
-for i in $(seq 1 $times); do
+for i in $(seq 1 $iter); do
     echo "Iteration $i"
     python question_generate.py
     python filter_questions.py
-    python answer_generate.py
 done

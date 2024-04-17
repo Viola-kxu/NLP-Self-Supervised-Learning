@@ -6,9 +6,7 @@ from utils import *
 from generate_questions import SEED_SIZE
 
 
-def generate_answers(args, instruction, seed):
-    prompt = instruction
-
+def generate_answers(instruction, seed):
     # read current questions
     num = 1
     instances = []
@@ -18,15 +16,22 @@ def generate_answers(args, instruction, seed):
             num += 1
 
     # generate an answer for each question
-    for i in range(SEED_SIZE, len(instances)):
-        prompt += "Given question: " + instances[i]['question']
+    for i in range(SEED_SIZE, num - 1):
+        prompt = instances[i]['question'] + "\nA: "
         # extract options from the question
         options = extract_options(instances[i]['question'], instances[i]['id'])
         # generate the correct index for the question
-        ans = extract_idx(call_openai_api(prompt))
-        gen = {"id": instances[i]['id'], "question": instances[i]['question'], "options": options, "correct_index": [ans]}
-        dump_jsonl(gen, args.save_path)
-        print(instances[i]['id'], "completed!")
+        response = call_openai_api(instruction + prompt)
+        ans = extract_idx(response)
+        generated = {"id": instances[i]['id'], "question": instances[i]['question'], "options": options, "correct_index": [ans]}
+        instances[i] = generated
+
+        # test - dump the generated answers to a file
+        print("Answer generated for id = " + str(i) + " -------------------")
+        print("Options: ", options, ", Correct index: ", generated['correct_index'], sep="")
+        dump_jsonl(generated, '../data/generated_answers_test.jsonl')
+
+    return instances
 
 
 def extract_idx(input_text):
@@ -66,4 +71,11 @@ if __name__ == '__main__':
 
     with open(args.ins_file, 'r', encoding="utf-8") as f:
         instruction = f.read()
-    generate_answers(args, instruction, file)
+    instances = generate_answers(instruction, file)
+
+    # clear the file
+    target_file = open(args.save_path, mode="w").close()
+
+    # write the generated answers to the file
+    for instance in instances:
+        dump_jsonl(instance, args.save_path)
