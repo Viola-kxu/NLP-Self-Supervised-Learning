@@ -1,0 +1,6 @@
+Please answer the question provided by carefully explaining each step of your reasoning. Conclude your response by indicating the correct option using an index: if the answer is (A), respond with 0; if it is (B), respond with 1; and so on. Format your response as follows: "Correct Index: [index]; Explanation: [your detailed reasoning]".
+
+#EXAMPLE#
+Q: For $i=\sqrt{-1}$, what is the sum $(7+3 i)+(-8+9 i) ?$ Answer Choices: (A)$-1+12 i$ (B)$-1-6 i$ (C)$15+12 i$ (D)$15-6 i$
+A: Correct Index: 0; Explanation: To find the sum of $(7+3i) + (-8+9i)$, you simply add the real parts together and the imaginary parts together. Real parts: $7+(-8)=-1$, Imaginary parts: $3i+9i=12i$. So, the sum is $-1+12i$. Therefore, the correct answer choice is (A)$-1+12i$, so the correct index is 0.
+
