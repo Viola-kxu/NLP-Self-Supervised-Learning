@@ -38,6 +38,7 @@ def delete_question_by_id(instances, ids):
     instance_id = 1
     for i in range(len(instances)):
         if i not in ids:
+            instances[i]['id'] = instance_id
             dump_jsonl(instances[i], args.save_path)
             instance_id += 1
 
@@ -47,6 +48,15 @@ def extract_idx_from_msg(text):
     if match:
         return int(match.group(1))
     return None
+
+
+def renumber_jsonl():
+    instances = []
+    with (open(args.save_path, 'r', encoding="utf-8") as f):
+        for line in f:
+            instances.append(json.loads(line))
+    open(args.save_path, mode="w").close()
+    delete_question_by_id(instances, [])
 
 
 if __name__ == '__main__':
@@ -62,13 +72,13 @@ if __name__ == '__main__':
     # get delete index
     with open(args.ins_file, 'r', encoding="utf-8") as f:
         instruction = f.read()
-    instances, delete_idx = get_delete_idx(instruction, file)
+    data, delete_idx = get_delete_idx(instruction, file)
     # print("Filtered indices: ", delete_idx, " -----------------------")
 
     # clear target file
     target_file = open(args.save_path, mode="w").close()
 
     # delete questions
-    delete_question_by_id(instances, delete_idx)
+    delete_question_by_id(data, delete_idx)
 
     print("FILTERING DONE -----------------------")
