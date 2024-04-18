@@ -22,12 +22,13 @@ def generate_answers(instruction, seed):
         options = extract_options(instances[i]['question'], instances[i]['id'])
         # generate the correct index for the question
         response = call_openai_api(instruction + prompt)
+        print("Answer generated for id = " + str(i + 1) + " -------------------")
+        print(response)
         ans = extract_idx(response)
         generated = {"id": instances[i]['id'], "question": instances[i]['question'], "options": options, "correct_index": [ans]}
         instances[i] = generated
 
         # test - dump the generated answers to a file
-        print("Answer generated for id = " + str(i) + " -------------------")
         print("Options: ", options, ", Correct index: ", generated['correct_index'], sep="")
         dump_jsonl(generated, '../data/generated_answers_test.jsonl')
 
