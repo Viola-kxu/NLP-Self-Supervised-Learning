@@ -45,5 +45,6 @@ def call_openai_api(prompt):
             print('openai.error.APIConnectionError\nRetrying...')
             time.sleep(20)
 
+    # print(res)
     # print(res['choices'][0]['message']['content'])
     return res['choices'][0]['message']['content']
