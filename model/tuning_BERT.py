@@ -1,10 +1,10 @@
 import numpy as np
+from datasets import Dataset
 from transformers import AutoTokenizer, PreTrainedTokenizerBase, AutoModelForMultipleChoice, TrainingArguments, Trainer
 from transformers.utils import PaddingStrategy
 
 import json
 from dataclasses import dataclass
-import random
 from typing import Union, Optional
 import argparse
 import torch
@@ -14,17 +14,23 @@ accuracy = evaluate.load("accuracy")
 
 
 def get_dataset(mode='train'):
-    dataset = []
+    dataset = {'id': [], 'question': [], 'options': [], 'correct_index': []}
     with (open(args.train_path if mode == 'train' else args.val_path, 'r', encoding="utf-8") as f):
         for line in f:
-            dataset.append(json.loads(line))
-    random.shuffle(dataset)
-    return dataset
+            data = json.loads(line)
+            for key in dataset.keys():
+                if key != "correct_index":
+                    dataset[key].append(data[key])
+                else:
+                    dataset[key].append(data[key][0])
+    return Dataset.from_dict(dataset)
 
 
 def preprocess_function(dataset):
-    questions = [[instance['question']] * 4 for instance in dataset]
-    options = [[f"[OPTION] {instance['options'][_]}" for _ in range(4)] for instance in dataset]
+    questions = [[instance for _ in range(4)] for instance in dataset['question']]
+    options = [
+        [f"[OPTION {j}] {dataset['options'][i][j]}" for j in range(4)] for i in range(len(questions))
+    ]
 
     questions = sum(questions, [])
     options = sum(options, [])
@@ -45,13 +51,11 @@ class DataCollatorForMultipleChoice:
     pad_to_multiple_of: Optional[int] = None
 
     def __call__(self, features):
-        print("__call__ called ---------------\n")
-        label_name = "label" if "label" in features[0].keys() else "correct_index"
+        label_name = "correct_index" if "correct_index" in features[0].keys() else "labels"
         labels = [feature.pop(label_name) for feature in features]
         batch_size = len(features)
-        num_choices = len(features[0]["input_ids"])
         flattened_features = [
-            [{k: v[i] for k, v in feature.items()} for i in range(num_choices)] for feature in features
+            [{k: v[i] for k, v in feature.items()} for i in range(4)] for feature in features
         ]
         flattened_features = sum(flattened_features, [])
 
@@ -63,7 +67,7 @@ class DataCollatorForMultipleChoice:
             return_tensors="pt",
         )
 
-        batch = {k: v.view(batch_size, num_choices, -1) for k, v in batch.items()}
+        batch = {k: v.view(batch_size, 4, -1) for k, v in batch.items()}
         batch["labels"] = torch.tensor(labels, dtype=torch.int64)
         return batch
 
@@ -80,6 +84,7 @@ def train():
         evaluation_strategy="epoch",
         save_strategy="epoch",
         load_best_model_at_end=True,
+        remove_unused_columns=False,
         learning_rate=5e-5,
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,
@@ -87,13 +92,17 @@ def train():
         weight_decay=0.01
     )
 
-    print(preprocess_function(get_dataset('train')).keys())
+    # train_dateset = get_dataset('train').map(preprocess_function, batched=True)
+    # eval_dataset = get_dataset('val').map(preprocess_function, batched=True)
+
+    train_dateset = get_dataset('train').map(preprocess_function, batched=True).remove_columns(["id", "question", "options"])
+    eval_dataset = get_dataset('val').map(preprocess_function, batched=True).remove_columns(["id", "question", "options"])
 
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=preprocess_function(get_dataset('train')),
-        eval_dataset=preprocess_function(get_dataset('val')),
+        train_dataset=train_dateset,
+        eval_dataset=eval_dataset,
         tokenizer=tokenizer,
         data_collator=DataCollatorForMultipleChoice(tokenizer=tokenizer),
         compute_metrics=compute_metrics
@@ -106,14 +115,14 @@ def evaluation():
     dataset = get_dataset('val')
     correct = 0
 
-    for instance in dataset:
-        inputs = tokenizer([[instance['question'], instance['options'][i]] for i in range(4)], return_tensors="pt", padding=True)
+    for idx in range(len(dataset['question'])):
+        inputs = tokenizer([[dataset[idx]['question'], dataset[idx]['options'][option_idx]] for option_idx in range(4)], return_tensors="pt", padding=True)
         labels = torch.tensor(0).unsqueeze(0)
         outputs = model(**{k: v.unsqueeze(0) for k, v in inputs.items()}, labels=labels)
         logits = outputs.logits
 
         predicted_class = logits.argmax().item()
-        if predicted_class == instance['correct_index'][0]:
+        if predicted_class == dataset[idx]['correct_index'][0]:
             correct += 1
 
     print(f"Accuracy: {correct / len(dataset)}")
