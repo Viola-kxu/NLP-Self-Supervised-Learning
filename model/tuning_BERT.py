@@ -87,11 +87,11 @@ def train():
         save_strategy="epoch",
         load_best_model_at_end=True,
         remove_unused_columns=False,
-        logging_steps=20,
-        learning_rate=1e-4,
-        per_device_train_batch_size=8,
+        logging_steps=100,
+        learning_rate=5e-5,
+        per_device_train_batch_size=20,
         per_device_eval_batch_size=4,
-        num_train_epochs=2,
+        num_train_epochs=5,
         weight_decay=0.01
     )
 
@@ -133,8 +133,7 @@ def evaluation():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_path", type=str, default="../data/finetune_data_GPT.jsonl")
-    # parser.add_argument("--train_path", type=str, default="../data/archive/sat_math_seed_train.jsonl")
+    parser.add_argument("--train_path", type=str, default="../data/generated_dataset.jsonl")
     parser.add_argument("--val_path", type=str, default="../data/archive/sat_math_validation.jsonl")
     parser.add_argument("--model_save_path", type=str, default="model_sat_math")
     # parser.add_argument("--model", type=str, default="google-bert/bert-base-uncased")
