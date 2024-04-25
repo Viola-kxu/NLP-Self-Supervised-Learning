@@ -35,7 +35,9 @@ def preprocess_function(dataset):
     questions = sum(questions, [])
     options = sum(options, [])
 
-    tokenized_examples = tokenizer(questions, options, truncation=True)
+    # tokenized_examples = tokenizer(questions, options, truncation=True)
+    tokenized_examples = tokenizer(questions, options, truncation=True, padding=True, max_length=512, add_special_tokens=True)
+
     return {k: [v[i: i + 4] for i in range(0, len(v), 4)] for k, v in tokenized_examples.items()}
 
 
@@ -65,10 +67,10 @@ class DataCollatorForMultipleChoice:
             max_length=self.max_length,
             pad_to_multiple_of=self.pad_to_multiple_of,
             return_tensors="pt",
-        )
+        ).to(device)
 
         batch = {k: v.view(batch_size, 4, -1) for k, v in batch.items()}
-        batch["labels"] = torch.tensor(labels, dtype=torch.int64)
+        batch["labels"] = torch.tensor(labels, dtype=torch.int64).to(device)
         return batch
 
 
@@ -85,10 +87,11 @@ def train():
         save_strategy="epoch",
         load_best_model_at_end=True,
         remove_unused_columns=False,
-        learning_rate=5e-5,
+        logging_steps=20,
+        learning_rate=1e-4,
         per_device_train_batch_size=8,
-        per_device_eval_batch_size=8,
-        num_train_epochs=3,
+        per_device_eval_batch_size=4,
+        num_train_epochs=2,
         weight_decay=0.01
     )
 
@@ -116,8 +119,8 @@ def evaluation():
     correct = 0
 
     for idx in range(len(dataset['question'])):
-        inputs = tokenizer([[dataset[idx]['question'], dataset[idx]['options'][option_idx]] for option_idx in range(4)], return_tensors="pt", padding=True)
-        labels = torch.tensor(0).unsqueeze(0)
+        inputs = tokenizer([[dataset[idx]['question'], dataset[idx]['options'][option_idx]] for option_idx in range(4)], return_tensors="pt", padding=True).to(device)
+        labels = torch.tensor(0).unsqueeze(0).to(device)
         outputs = model(**{k: v.unsqueeze(0) for k, v in inputs.items()}, labels=labels)
         logits = outputs.logits
 
@@ -131,16 +134,18 @@ def evaluation():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--train_path", type=str, default="../data/finetune_data_GPT.jsonl")
+    # parser.add_argument("--train_path", type=str, default="../data/archive/sat_math_seed_train.jsonl")
     parser.add_argument("--val_path", type=str, default="../data/archive/sat_math_validation.jsonl")
     parser.add_argument("--model_save_path", type=str, default="model_sat_math")
-    parser.add_argument("--num_epochs", type=int, default=10)
-    parser.add_argument("--batch_size", type=int, default=4)
-    parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--model", type=str, default="google-bert/bert-base-uncased")
+    # parser.add_argument("--model", type=str, default="google-bert/bert-base-uncased")
+    # parser.add_argument("--model", type=str, default="google/bert_uncased_L-4_H-512_A-8") # BERT-small
+    parser.add_argument("--model", type=str, default="google/bert_uncased_L-2_H-128_A-2")  # BERT-tiny
+
     args = parser.parse_args()
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    model = AutoModelForMultipleChoice.from_pretrained(args.model)
+    model = AutoModelForMultipleChoice.from_pretrained(args.model).to(device)
 
     train()
     evaluation()
