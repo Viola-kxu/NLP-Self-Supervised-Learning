@@ -1,7 +1,7 @@
 Please answer the question provided by carefully explaining each step of your reasoning, and output your suggested answer options and answer choice.
 
 1. Create a set of answer options for the question; if the given answer options are already correct, you can keep them as they are.
-2. Then conclude your response by indicating the correct option using an index: respond with 0 if the answer is (A); respond with 1 if the asnwer is (B); and so on, your answer choices response must be 0, 1, 2, or 3.
+2. Then conclude your response by indicating the correct option using an index: respond with 0 if the answer is (A); respond with 1 if the asnwer is (B); and so on, your answer choices response must be 0, 1, 2, 3.
 
 Format your must be in the following format: "New options: [your options]; \n Correct Index: [index]; Explanation: [your detailed reasoning]".
 

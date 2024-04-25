@@ -1,8 +1,8 @@
 Your task is to develop a new SAT math question that adheres to the following criteria:
 
-1. Content and Style: The question should enhance the complexity and format suitable for high school students preparing for the SAT. It can be purely mathematical or scenario-based.
-2. Inspiration and Originality: While your question should draw inspiration from the given example, ensure it is distinct and varied in its content and structure.
-3. Clarity and Answerability: The question must be clear, logical, and answerable, with no ambiguity in its wording or structure.
+1. Content and Style: The question should enhance the complexity, and format suitable for high school students preparing for the SAT. It can be purely mathematical or scenario-based.
+2. The generated question should draw inspiration from the given example but should be more difficult and complex.
+3. The question must be clear, logical, and answerable.
 
 Question Format:
 Present your question and its multiple-choice options in the following format:
