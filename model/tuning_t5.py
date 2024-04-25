@@ -104,13 +104,14 @@ def evaluate_model(model, dataloader, tokenizer, device):
     with torch.no_grad():
         for batch in dataloader:
             input_ids = batch['input_ids'].to(device)
+            # option_ids = batch['option_ids'].to(device)
             attention_mask = batch['attention_mask'].to(device)
-            labels = batch['labels'].to(device)
             correct_index = batch['correct_index'].to(device)
 
             # outputs = model(input_ids, attention_mask)
             generated_ids = model.generate(
                 input_ids=input_ids,
+                # decoder_input_ids=option_ids,
                 attention_mask=attention_mask,
                 max_length=150,
                 num_beams=2,
@@ -136,8 +137,7 @@ def accurate_count(preds, correct_index):
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # tokenizer = AutoTokenizer.from_pretrained(args.model)
-    tokenizer = T5Tokenizer.from_pretrained('t5-small')
+    tokenizer = T5Tokenizer.from_pretrained(args.model)
 
     train_dataset = SATMathDataset(tokenizer, split='train')
     validation_dataset = SATMathDataset(tokenizer, split='validation')
@@ -145,12 +145,10 @@ def main():
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     validation_dataloader = DataLoader(validation_dataset, batch_size=args.batch_size, shuffle=False)
 
-    # model = CustomModelForHeadTuning(args.model, num_labels=4).to(device)
-    model = T5ForConditionalGeneration.from_pretrained('t5-small').to(device)
-    # optimizer = torch.optim.AdamW(model.classifier.parameters(), lr=args.lr)
+    model = T5ForConditionalGeneration.from_pretrained(args.model).to(device)
     optimizer = torch.optim.Adam(params=model.parameters())
 
-    val_accuracy_best = -1
+    val_accuracy_best = 0
     for epoch in range(args.num_epochs):
         print(f'Epoch {epoch + 1}')
         avg_loss = train(model, train_dataloader, optimizer, device)
@@ -164,13 +162,12 @@ def main():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_path", type=str, default="../data/archive/sat_math_seed_train.jsonl")
+    parser.add_argument("--train_path", type=str, default="../data/archive/finetune_data_GPT.jsonl")
     parser.add_argument("--val_path", type=str, default="../data/archive/sat_math_validation.jsonl")
     parser.add_argument("--num_epochs", type=int, default=10)
     parser.add_argument("--batch_size", type=int, default=4)
-    parser.add_argument("--lr", type=float, default=1e-3)
-    # parser.add_argument("--model", type=str, default="bert-base-uncased")
-    parser.add_argument("--model", type=str, default="t5-base")
+    parser.add_argument("--lr", type=float, default=1e-4)
+    parser.add_argument("--model", type=str, default="t5-small")
 
     args = parser.parse_args()
 

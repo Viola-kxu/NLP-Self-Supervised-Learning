@@ -5,7 +5,7 @@ from utils import *
 
 SEED_SIZE = 120
 NUM_SELECTION = 3
-GENERATE_COUNT = 10
+GENERATE_COUNT = 26
 
 
 def generate_question(args, instruction, seed):
@@ -23,7 +23,7 @@ def generate_question(args, instruction, seed):
         question_prompt = ""
         question_ids = random.sample(range(0, SEED_SIZE - 1), NUM_SELECTION) + random.sample(range(SEED_SIZE, num - 1), NUM_SELECTION)
         random.shuffle(question_ids) # shuffle order
-        print("\nGenerating instance " + str(_) + " ----------------------- \nQuestions selected: ", question_ids)
+        print("\nGenerating instance " + str(_) + f" (id = {num}) ----------------------- \nQuestions selected: ", question_ids)
         for question_id in question_ids:
             question_prompt += "#Given Question#: " + instances[question_id]['question'] + "\n\n"
 
@@ -31,7 +31,7 @@ def generate_question(args, instruction, seed):
         generated = call_openai_api(instruction + question_prompt)
         gen_instance = {"id": num, "question": generated}
         dump_jsonl(gen_instance, args.save_path)
-        print("Generated question (id = " + str(num) + "): \n", generated)
+        # print("Generated question (id = " + str(num) + "): \n", generated)
 
         # update of questions instances
         num += 1

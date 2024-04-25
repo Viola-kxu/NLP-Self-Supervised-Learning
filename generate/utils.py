@@ -2,7 +2,8 @@ import json
 import time
 import openai
 
-openai.api_key = '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'
+# openai.api_key = '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'  # Tian's API
+openai.api_key = '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'  # Viola's API
 
 
 def dump_jsonl(data, output_path, append=True):
@@ -45,5 +46,6 @@ def call_openai_api(prompt):
             print('openai.error.APIConnectionError\nRetrying...')
             time.sleep(20)
 
+    # print(res)
     # print(res['choices'][0]['message']['content'])
     return res['choices'][0]['message']['content']
