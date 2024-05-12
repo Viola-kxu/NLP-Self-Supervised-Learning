@@ -5,7 +5,7 @@ from utils import *
 
 SEED_SIZE = 120
 NUM_SELECTION = 3
-GENERATE_COUNT = 26
+GENERATE_COUNT = 50
 
 
 def generate_question(args, instruction, seed):

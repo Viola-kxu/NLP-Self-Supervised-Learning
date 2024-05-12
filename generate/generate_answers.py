@@ -18,8 +18,8 @@ def generate_answers(instruction, file):
     # for j in []: # generate for specific questions
     #     i = j - 1
     for i in range(0, num - 1):
-        # if 'correct_index' in instances[i].keys():
-        #     continue
+        if 'correct_index' in instances[i].keys():
+            continue
         prompt = str(instances[i]['question']) + "\n#Your response#: "
         # extract options from the question
         # options = extract_options(instances[i]['question'], instances[i]['id'])

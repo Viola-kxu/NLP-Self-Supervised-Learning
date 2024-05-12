@@ -10,6 +10,8 @@ import argparse
 import torch
 import evaluate
 
+
+NUM_OPTIONS = 5
 accuracy = evaluate.load("accuracy")
 
 
@@ -27,9 +29,9 @@ def get_dataset(mode='train'):
 
 
 def preprocess_function(dataset):
-    questions = [[instance for _ in range(4)] for instance in dataset['question']]
+    questions = [[instance for _ in range(NUM_OPTIONS)] for instance in dataset['question']]
     options = [
-        [f"[OPTION {j}] {dataset['options'][i][j]}" for j in range(4)] for i in range(len(questions))
+        [f"[OPTION {j}] {dataset['options'][i][j]}" for j in range(NUM_OPTIONS)] for i in range(len(questions))
     ]
 
     questions = sum(questions, [])
@@ -38,7 +40,7 @@ def preprocess_function(dataset):
     # tokenized_examples = tokenizer(questions, options, truncation=True)
     tokenized_examples = tokenizer(questions, options, truncation=True, padding=True, max_length=512, add_special_tokens=True)
 
-    return {k: [v[i: i + 4] for i in range(0, len(v), 4)] for k, v in tokenized_examples.items()}
+    return {k: [v[i: i + NUM_OPTIONS] for i in range(0, len(v), NUM_OPTIONS)] for k, v in tokenized_examples.items()}
 
 
 @dataclass
@@ -57,7 +59,7 @@ class DataCollatorForMultipleChoice:
         labels = [feature.pop(label_name) for feature in features]
         batch_size = len(features)
         flattened_features = [
-            [{k: v[i] for k, v in feature.items()} for i in range(4)] for feature in features
+            [{k: v[i] for k, v in feature.items()} for i in range(NUM_OPTIONS)] for feature in features
         ]
         flattened_features = sum(flattened_features, [])
 
@@ -69,7 +71,7 @@ class DataCollatorForMultipleChoice:
             return_tensors="pt",
         ).to(device)
 
-        batch = {k: v.view(batch_size, 4, -1) for k, v in batch.items()}
+        batch = {k: v.view(batch_size, NUM_OPTIONS, -1) for k, v in batch.items()}
         batch["labels"] = torch.tensor(labels, dtype=torch.int64).to(device)
         return batch
 
@@ -88,7 +90,7 @@ def train():
         load_best_model_at_end=True,
         remove_unused_columns=False,
         logging_steps=100,
-        learning_rate=5e-5,
+        learning_rate=1e-3,
         per_device_train_batch_size=20,
         per_device_eval_batch_size=4,
         num_train_epochs=5,
@@ -121,7 +123,7 @@ def evaluation():
     for idx in range(len(dataset['question'])):
         inputs = tokenizer([[dataset[idx]['question'], dataset[idx]['options'][option_idx]] for option_idx in range(4)], return_tensors="pt", padding=True).to(device)
         labels = torch.tensor(0).unsqueeze(0).to(device)
-        outputs = model(**{k: v.unsqueeze(0) for k, v in inputs.items()}, labels=labels)
+        outputs = model(**{k: v.unsqueeze(0).to(device) for k, v in inputs.items()}, labels=labels)
         logits = outputs.logits
 
         predicted_class = logits.argmax().item()
@@ -133,9 +135,9 @@ def evaluation():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_path", type=str, default="../data/generated_dataset.jsonl")
-    parser.add_argument("--val_path", type=str, default="../data/archive/sat_math_validation.jsonl")
-    parser.add_argument("--model_save_path", type=str, default="model_sat_math")
+    parser.add_argument("--train_path", type=str, default="../data/aqua_rat.jsonl")
+    parser.add_argument("--val_path", type=str, default="../data/aqua_rat_val.jsonl")
+    parser.add_argument("--model_save_path", type=str, default="model_aqua_rat_tiny")
     # parser.add_argument("--model", type=str, default="google-bert/bert-base-uncased")
     # parser.add_argument("--model", type=str, default="google/bert_uncased_L-4_H-512_A-8") # BERT-small
     parser.add_argument("--model", type=str, default="google/bert_uncased_L-2_H-128_A-2")  # BERT-tiny
