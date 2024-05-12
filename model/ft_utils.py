@@ -52,7 +52,8 @@ def dump_jsonl(data, output_path, append=True):
 #     return res['choices'][0]['message']['content']
 
 def call_openai_api(prompt):
-    model_id = "ft:gpt-3.5-turbo-1106:personal:math1:9N6jTW0L"
+    model_id = "ft:gpt-3.5-turbo-1106:personal:gsm8k:9NsmvFqA"
+    # model_id = "gpt-3.5-turbo"
     messages = [
         {"role": "system", "content": "You are a math problem solver."},
         {"role": "user", "content": prompt}
@@ -65,7 +66,7 @@ def call_openai_api(prompt):
             response = openai.ChatCompletion.create(
                 model=model_id,
                 messages=messages,
-                temperature=0.5,
+                temperature=0.7,
                 max_tokens=512
             )
             return response['choices'][0]['message']['content']

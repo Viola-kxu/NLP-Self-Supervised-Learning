@@ -1,0 +1,7 @@
+Your task is to develop a new math question that adheres to the following criteria:
+
+1. The question should enhance the complexity, and format suitable for grade school students. It can be purely mathematical or scenario-based.
+2. The generated question should be similar to the given example with increased difficulty and complexity. The question should be a short answer question and not a multiple choice question.
+
+Present your question and its multiple-choice options in the following format: [Insert your question here]
+

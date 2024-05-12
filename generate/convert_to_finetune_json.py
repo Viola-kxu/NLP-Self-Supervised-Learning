@@ -46,13 +46,36 @@ def convert_GPT3dataset(input_file, output_file):
             json.dump(formatted_data, outfile)
             outfile.write('\n')
 
+def convert_GPT3dataset_gsm8k(input_file, output_file):
+    system_message = "This is a math problem solver model, which will give the correct answer of each math problem."
+
+    with open(input_file, 'r', encoding='utf-8') as infile, open(output_file, 'w', encoding='utf-8') as outfile:
+        for line in infile:
+            data = json.loads(line)
+            question = data['question']
+            correct_answer = data['answer']
+
+            formatted_data = {
+                "messages": [
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": question},
+                    {"role": "assistant", "content": correct_answer}
+                ]
+            }
+
+            json.dump(formatted_data, outfile)
+            outfile.write('\n')
+
 # Specify the input and output file paths
 input_file1 = '../data/generated_dataset.jsonl'
 input_file2 = '../data/archive/sat_math_validation.jsonl'
 output_file1 = '../data/GPT3.5_formatted_trained.jsonl'
 output_file2 = '../data/GPT3.5_formatted_validation.jsonl'
+input_file3 = '../data/gsm8k_generated.jsonl'
+output_file3 = '../data/gsm8k_formatted_trained.jsonl'
 
 
 if __name__ == "__main__":
-    convert_GPT3dataset(input_file1, output_file1)
-    convert_GPT3dataset(input_file2, output_file2)
+    # convert_GPT3dataset(input_file1, output_file1)
+    # convert_GPT3dataset(input_file2, output_file2)
+    convert_GPT3dataset_gsm8k(input_file3, output_file3)

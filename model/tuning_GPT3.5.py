@@ -14,16 +14,10 @@ def generate_answers(instruction, file):
             instances.append(json.loads(line))
             num += 1
 
-    # generate an answer for each question
-    # for j in []: # generate for specific questions
-    #     i = j - 1
     for i in range(0, num - 1):
         # if 'correct_index' in instances[i].keys():
         #     continue
         prompt = str(instances[i]['question']) + "\n#Your response#: "
-        # extract options from the question
-        # options = extract_options(instances[i]['question'], instances[i]['id'])
-        # generate the correct index for the question
         response = call_openai_api(instruction + prompt)
         print("Answer generated for id = " + str(i + 1) + " -------------------")
         # print(response)
@@ -86,7 +80,7 @@ def temp_accuracy():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', type=str, default='../data/archive/sat_math_val_wout_ans.jsonl')
-    parser.add_argument('--save_path', type=str, default='../data/finetuned_sat_math_with_answers2.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/base_sat_math_with_answers.jsonl')
     parser.add_argument('--ins_file', type=str, default='../generate/instructions/instruction_answer.txt')
     args = parser.parse_args()
 
@@ -99,5 +93,5 @@ if __name__ == '__main__':
     for instance in instances:
         dump_jsonl(instance, args.save_path)
 
-    print("Invalid indices", report_invalid_answers(args.file))
+    #print("Invalid indices", report_invalid_answers(args.file))
 

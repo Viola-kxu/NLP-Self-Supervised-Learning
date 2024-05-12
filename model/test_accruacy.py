@@ -24,7 +24,7 @@ def test_accuracy():
     """
     Test the accuracy of answers by comparing two files.
     """
-    path1 = "../data/finetuned_sat_math_with_answers2.jsonl"
+    path1 = "../data/base_sat_math_with_answers.jsonl"
     path2 = "../data/archive/sat_math_validation.jsonl"
 
     # Read correct indices from both files
@@ -44,6 +44,36 @@ def test_accuracy():
     print("Accuracy:", accuracy)
     print("Correct IDs:", correct_ids)
 
+def test_gsm8k_accuracy():
+    predicted_answers = []
+    actual_answers = []
+    with (open(path1, 'r', encoding="utf-8") as f):
+        for line in f:
+            generated_answer = json.loads(line)['Correct Answer']
+            predicted_answers.append(generated_answer)
+    with (open(path2, 'r', encoding="utf-8") as f):
+        for line in f:
+            actual_answer = extract_actual_answer(json.loads(line)['answer'])
+            actual_answers.append(actual_answer)
+    print("actual answers", actual_answers)
+    print("predicted answers", predicted_answers)
+    correct_count = 0
+    for predicted, actual in zip(predicted_answers, actual_answers):
+        if predicted == actual:
+            correct_count += 1
+    print("Accuracy: ", correct_count / len(actual_answers))
+
+def extract_actual_answer(answer):
+    start = answer.index("####") + 4
+    return answer[start:].strip()
+
+
 
 if __name__ == "__main__":
-    test_accuracy()
+    path1 = "../data/base_gsm8k_answer.jsonl"
+    path2 = "../data/gsm8k_test.jsonl"
+
+    # test_accuracy()
+    test_gsm8k_accuracy()
+
+

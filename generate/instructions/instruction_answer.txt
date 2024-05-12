@@ -3,8 +3,9 @@ Please answer the question provided by carefully explaining each step of your re
 1. Create a set of answer options for the question; if the given answer options are already correct, you can keep them as they are.
 2. Then conclude your response by indicating the correct option using an index: respond with 0 if the answer is (A); respond with 1 if the asnwer is (B); and so on, your answer choices response must be 0, 1, 2, 3.
 
-Format your must be in the following format: "New options: [your options]; \n Correct Index: [index]; Explanation: [your detailed reasoning]".
+Format: your format must be in the following format: "New options: [your options]; \n Correct Index: [index]; Explanation: [your detailed reasoning]".
 
+Here is an example:
 #Given question#:
 Q: For $i=\sqrt{-1}$, what is the sum $(7+3 i)+(-8+9 i) ?$ Answer Choices: (A)$-1+12 i$ (B)$-1-6 i$ (C)$15+12 i$ (D)$15-6 i$
 A: New options: (A)$-1+12 i$ (B)$-1-6 i$ (C)$15+12 i$ (D)$15-6 i$; Correct Index: 0;
