@@ -10,6 +10,8 @@ import argparse
 import torch
 import evaluate
 
+
+NUM_OPTIONS = 5
 accuracy = evaluate.load("accuracy")
 
 
@@ -25,11 +27,10 @@ def get_dataset(mode='train'):
                     dataset[key].append(data[key][0])
     return Dataset.from_dict(dataset)
 
-
 def preprocess_function(dataset):
-    questions = [[instance for _ in range(4)] for instance in dataset['question']]
+    questions = [[instance for _ in range(NUM_OPTIONS)] for instance in dataset['question']]
     options = [
-        [f"[OPTION {j}] {dataset['options'][i][j]}" for j in range(4)] for i in range(len(questions))
+        [f"[OPTION {j}] {dataset['options'][i][j]}" for j in range(NUM_OPTIONS)] for i in range(len(questions))
     ]
 
     questions = sum(questions, [])
@@ -38,15 +39,43 @@ def preprocess_function(dataset):
     # tokenized_examples = tokenizer(questions, options, truncation=True)
     tokenized_examples = tokenizer(questions, options, truncation=True, padding=True, max_length=512, add_special_tokens=True)
 
-    return {k: [v[i: i + 4] for i in range(0, len(v), 4)] for k, v in tokenized_examples.items()}
+    return {k: [v[i: i + NUM_OPTIONS] for i in range(0, len(v), NUM_OPTIONS)] for k, v in tokenized_examples.items()}
 
 
 @dataclass
-class DataCollatorForMultipleChoice:
-    """
-    Data collator that will dynamically pad the inputs for multiple choice received.
-    """
+# class DataCollatorForMultipleChoice:
+#     """
+#     Data collator that will dynamically pad the inputs for multiple choice received.
+#     """
+#
+#     tokenizer: PreTrainedTokenizerBase
+#     padding: Union[bool, str, PaddingStrategy] = True
+#     max_length: Optional[int] = None
+#     pad_to_multiple_of: Optional[int] = None
+#
+#     def __call__(self, features):
+#         label_name = "correct_index" if "correct_index" in features[0].keys() else "labels"
+#         labels = [feature.pop(label_name) for feature in features]
+#         batch_size = len(features)
+#         flattened_features = [
+#             [{k: v[i] for k, v in feature.items()} for i in range(NUM_OPTIONS)] for feature in features
+#         ]
+#         flattened_features = sum(flattened_features, [])
+#
+#         batch = self.tokenizer.pad(
+#             flattened_features,
+#             padding=self.padding,
+#             max_length=self.max_length,
+#             pad_to_multiple_of=self.pad_to_multiple_of,
+#             return_tensors="pt",
+#         ).to(device)
+#
+#         batch = {k: v.view(batch_size, NUM_OPTIONS, -1) for k, v in batch.items()}
+#         batch["labels"] = torch.tensor(labels, dtype=torch.int64).to(device)
+#         return batch
 
+@dataclass
+class DataCollatorForMultipleChoice:
     tokenizer: PreTrainedTokenizerBase
     padding: Union[bool, str, PaddingStrategy] = True
     max_length: Optional[int] = None
@@ -57,20 +86,22 @@ class DataCollatorForMultipleChoice:
         labels = [feature.pop(label_name) for feature in features]
         batch_size = len(features)
         flattened_features = [
-            [{k: v[i] for k, v in feature.items()} for i in range(4)] for feature in features
+            [{k: v[i] for k, v in feature.items()} for i in range(NUM_OPTIONS)] for feature in features
         ]
         flattened_features = sum(flattened_features, [])
 
+        # Ensure tensors are on CPU and only move to device later
         batch = self.tokenizer.pad(
             flattened_features,
             padding=self.padding,
             max_length=self.max_length,
             pad_to_multiple_of=self.pad_to_multiple_of,
-            return_tensors="pt",
-        ).to(device)
+            return_tensors="pt"
+        )
 
-        batch = {k: v.view(batch_size, 4, -1) for k, v in batch.items()}
-        batch["labels"] = torch.tensor(labels, dtype=torch.int64).to(device)
+        # Do not move to device here; return CPU tensors
+        batch = {k: v.view(batch_size, NUM_OPTIONS, -1) for k, v in batch.items()}
+        batch["labels"] = torch.tensor(labels, dtype=torch.int64)
         return batch
 
 
@@ -113,32 +144,76 @@ def train():
 
     trainer.train()
 
+# def evaluation():
+#     dataset = get_dataset('val')
+#     correct = 0
+#     for idx in range(len(dataset['question'])):
+#         inputs = tokenizer(dataset[idx]['question'], dataset[idx]['options'], return_tensors="pt", padding=True)
+#         labels = torch.tensor([dataset[idx]['correct_index']], dtype=torch.int64)
+#         inputs = {k: v.to(device) for k, v in inputs.items()}  # Move to device here to fix the bug
+#         labels = labels.to(device)
+#
+#         outputs = model(**inputs, labels=labels)
+#         logits = outputs.logits
+#         predicted_class = logits.argmax(dim=1)
+#         if predicted_class.item() == labels.item():
+#             correct += 1
+#
+#     print(f"Accuracy: {correct / len(dataset)}")
 
 def evaluation():
     dataset = get_dataset('val')
     correct = 0
 
-    for idx in range(len(dataset['question'])):
-        inputs = tokenizer([[dataset[idx]['question'], dataset[idx]['options'][option_idx]] for option_idx in range(4)], return_tensors="pt", padding=True).to(device)
-        labels = torch.tensor(0).unsqueeze(0).to(device)
-        outputs = model(**{k: v.unsqueeze(0) for k, v in inputs.items()}, labels=labels)
-        logits = outputs.logits
+    for item in dataset:
+        question = item['question']
+        options = item['options']
+        correct_index = item['correct_index']  # Assuming correct_index is already an integer
 
-        predicted_class = logits.argmax().item()
-        if predicted_class == dataset[idx]['correct_index'][0]:
+        # Tokenize each option together with the question
+        input_ids = []
+        attention_masks = []
+        for option in options:
+            inputs = tokenizer(question, option, return_tensors="pt", padding="max_length", max_length=512, truncation=True)
+            input_ids.append(inputs['input_ids'][0])
+            attention_masks.append(inputs['attention_mask'][0])
+
+        # Convert list of tensors to a single tensor for each type
+        input_ids = torch.stack(input_ids, dim=0).unsqueeze(0).to(device)  # Shape: (1, num_options, seq_length)
+        attention_masks = torch.stack(attention_masks, dim=0).unsqueeze(0).to(device)  # Shape: (1, num_options, seq_length)
+
+        # Create a dictionary for model inputs
+        batch_inputs = {
+            'input_ids': input_ids,
+            'attention_mask': attention_masks
+        }
+
+        # Forward pass
+        outputs = model(**batch_inputs)
+        logits = outputs.logits.squeeze(0)  # Remove the batch dimension, now shape should be (num_options, num_classes)
+        predicted_class = logits.argmax(dim=0).item()  # Get the index of the highest logit score
+
+        # Check if the prediction matches the correct index
+        if predicted_class == correct_index:
             correct += 1
 
-    print(f"Accuracy: {correct / len(dataset)}")
+    accuracy = correct / len(dataset)
+    print(f"Accuracy: {accuracy}")
+    return accuracy
+
+
+
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--train_path", type=str, default="../data/generated_dataset.jsonl")
-    parser.add_argument("--val_path", type=str, default="../data/archive/sat_math_validation.jsonl")
-    parser.add_argument("--model_save_path", type=str, default="model_sat_math")
-    # parser.add_argument("--model", type=str, default="google-bert/bert-base-uncased")
-    # parser.add_argument("--model", type=str, default="google/bert_uncased_L-4_H-512_A-8") # BERT-small
-    parser.add_argument("--model", type=str, default="google/bert_uncased_L-2_H-128_A-2")  # BERT-tiny
+    #parser.add_argument("--train_path", type=str, default="../data/sat_math/generated_sat_math_dataset.jsonl")
+    parser.add_argument("--val_path", type=str, default="../data/aqua_rat_val.jsonl")
+    parser.add_argument("--model_save_path", type=str, default="model_aqua_rat")
+    #parser.add_argument("--model", type=str, default="google-bert/bert-base-uncased")
+    #parser.add_argument("--model", type=str, default="google/bert_uncased_L-4_H-512_A-8") # BERT-small
+    parser.add_argument("--model", type=str, default="../model/model_sat_math/checkpoint-150") #Bert-finetuned
+    # parser.add_argument("--model", type=str, default="google/bert_uncased_L-2_H-128_A-2")  # BERT-tiny
 
     args = parser.parse_args()
 
@@ -146,5 +221,5 @@ if __name__ == "__main__":
     tokenizer = AutoTokenizer.from_pretrained(args.model)
     model = AutoModelForMultipleChoice.from_pretrained(args.model).to(device)
 
-    train()
+    #train()
     evaluation()
