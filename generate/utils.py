@@ -2,8 +2,7 @@ import json
 import time
 import openai
 
-# openai.api_key = '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'  # Tian's API
-openai.api_key = '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'  # Viola's API
+openai.api_key = '' # replace API here
 
 
 def dump_jsonl(data, output_path, append=True):
