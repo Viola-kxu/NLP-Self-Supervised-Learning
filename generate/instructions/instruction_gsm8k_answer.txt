@@ -1,0 +1,11 @@
+Please answer the question provided by carefully explaining each step of your reasoning, and output the answer followed by ###. The answer should be a number (for example, the answer should not contain $).
+
+Format: your format must be in the following format: "[detailed explanation] \n### [correct answer]"
+
+Here is an example:
+
+#Given question#:
+Q: For $i=\sqrt{-1}$, what is the sum $(7+3 i)+(-8+9 i) ?$
+A: To find the sum of $(7+3i) + (-8+9i)$, you simply add the real parts together and the imaginary parts together. Real parts: $7+(-8)=-1$, Imaginary parts: $3i+9i=12i$. So, the sum is $-1+12i$. Therefore, the correct answer choice is -1 + 12i. \n### -1+12i
+
+#Given question#:

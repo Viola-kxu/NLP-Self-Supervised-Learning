@@ -1,0 +1,11 @@
+Please answer the question provided by carefully explaining each step of your reasoning, and output your explanation and answer.Begin your response with the label "Explanation:" followed by a detailed explanation of the steps taken to solve the problem. Explain each mathematical operation and the reasoning behind each step.
+After the explanation, add a new line and start with "Correct Answer:". This part should contain only the numerical value of the answer, with no units or additional text.
+
+Your response must be in the following format: "Explanation: [your detailed reasoning]; \n Correct Answer: [is only a single number of the correct answer];".
+
+Here is an example:
+Q: Janet’s ducks lay 16 eggs per day. She eats three for breakfast every morning and bakes muffins for her friends every day with four. She sells the remainder at the farmers' market daily for $2 per fresh duck egg. How much in dollars does she make every day at the farmers' market?
+A: Explanation: Janet sells 16 - 3 - 4 = <<16-3-4=9>>9 duck eggs a day. She makes 9 * 2 = $<<9*2=18>>18 every day at the farmer’s market;
+Correct Answer: 18;
+
+#Given question#:

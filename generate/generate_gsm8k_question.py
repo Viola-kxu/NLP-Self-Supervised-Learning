@@ -5,7 +5,7 @@ from utils import *
 
 SEED_SIZE = 120
 NUM_SELECTION = 3
-GENERATE_COUNT = 50
+GENERATE_COUNT = 100
 
 
 def generate_question(args, instruction, seed):
@@ -22,16 +22,16 @@ def generate_question(args, instruction, seed):
         #      + NUM_QUES random questions from new generated questions
         question_prompt = ""
         question_ids = random.sample(range(0, SEED_SIZE - 1), NUM_SELECTION) + random.sample(range(SEED_SIZE, num - 1), NUM_SELECTION)
-        random.shuffle(question_ids) # shuffle order
+        random.shuffle(question_ids)  # shuffle order
         print("\nGenerating instance " + str(_) + f" (id = {num}) ----------------------- \nQuestions selected: ", question_ids)
         for question_id in question_ids:
             question_prompt += "#Given Question#: " + instances[question_id]['question'] + "\n\n"
 
         # generate a question
-        generated = call_openai_api(instruction + question_prompt)
+        generated = call_openai_api(instruction + question_prompt + "\n\n#Question#: ")
         gen_instance = {"id": num, "question": generated}
         dump_jsonl(gen_instance, args.save_path)
-        # print("Generated question (id = " + str(num) + "): \n", generated)
+        print("Generated question (id = " + str(num) + "): \n", generated)
 
         # update of questions instances
         num += 1
@@ -40,9 +40,9 @@ def generate_question(args, instruction, seed):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, default='../data/generated_dataset.jsonl')
-    parser.add_argument('--save_path', type=str, default='../data/generated_dataset.jsonl')
-    parser.add_argument('--ins_file', type=str, default='instructions/instruction_sat_math.txt')
+    parser.add_argument('--file', type=str, default='../data/gsm8k_generated.jsonl')
+    parser.add_argument('--save_path', type=str, default='../data/gsm8k_generated.jsonl')
+    parser.add_argument('--ins_file', type=str, default='instructions/instruction_gsm8k_question.txt')
     args = parser.parse_args()
     file = args.file
 
